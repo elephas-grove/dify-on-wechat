@@ -312,7 +312,7 @@ class GeWeChatMessage(ChatMessage):
             self.msg_data = msg['data']
         else:
             logger.warning(f"[gewechat] Missing both 'Data' and 'data' in message")
-            
+
         self.create_time = self.msg_data.get('CreateTime', 0)
         if not self.msg_data:
             logger.warning(f"[gewechat] No message data available")
@@ -405,29 +405,29 @@ class GeWeChatMessage(ChatMessage):
         elif msg_type == 10002 and self.is_group:  # 群系统消息
             content = self.msg_data.get('Content', {}).get('string', '')
             logger.debug(f"[gewechat] detected group system message: {content}")
-            
+
             if any(note in content for note in notes_bot_join_group):
-                logger.warn("机器人加入群聊消息，不处理~")
+                logger.warning("机器人加入群聊消息，不处理~")
                 self.content = content
                 return
-                
+
             if any(note in content for note in notes_join_group):
                 try:
                     xml_content = content.split(':\n', 1)[1] if ':\n' in content else content
                     root = ET.fromstring(xml_content)
-                    
+
                     sysmsgtemplate = root.find('.//sysmsgtemplate')
                     if sysmsgtemplate is None:
                         raise ET.ParseError("No sysmsgtemplate found")
-                        
+
                     content_template = sysmsgtemplate.find('.//content_template')
                     if content_template is None:
                         raise ET.ParseError("No content_template found")
-                        
+
                     content_type = content_template.get('type')
                     if content_type not in ['tmpl_type_profilewithrevoke', 'tmpl_type_profile']:
                         raise ET.ParseError(f"Invalid content_template type: {content_type}")
-                    
+
                     template = content_template.find('.//template')
                     if template is None:
                         raise ET.ParseError("No template element found")
@@ -435,45 +435,45 @@ class GeWeChatMessage(ChatMessage):
                     link_list = content_template.find('.//link_list')
                     target_nickname = "未知用户"
                     target_username = None
-                    
+
                     if link_list is not None:
                         # 根据消息类型确定要查找的link name
-                        link_name = 'names' if content_type == 'tmpl_type_profilewithrevoke' else 'kickoutname'
+                        link_name = 'names' if content_type == 'tmpl_type_profile' else 'kickoutname'
                         action_link = link_list.find(f".//link[@name='{link_name}']")
-                        
+
                         if action_link is not None:
                             members = action_link.findall('.//member')
                             nicknames = []
                             usernames = []
-                            
+
                             for member in members:
                                 nickname_elem = member.find('nickname')
                                 username_elem = member.find('username')
                                 nicknames.append(nickname_elem.text if nickname_elem is not None else "未知用户")
                                 usernames.append(username_elem.text if username_elem is not None else None)
-                            
+
                             # 处理分隔符（主要针对邀请消息）
                             separator_elem = action_link.find('separator')
                             separator = separator_elem.text if separator_elem is not None else '、'
                             target_nickname = separator.join(nicknames) if nicknames else "未知用户"
-                            
+
                             # 取第一个有效username（根据业务需求调整）
                             target_username = next((u for u in usernames if u), None)
 
                     # 构造最终消息内容
-                    if content_type == 'tmpl_type_profilewithrevoke':
+                    if content_type == 'tmpl_type_profile':
                         self.content = f'你邀请"{target_nickname}"加入了群聊'
                         self.ctype = ContextType.JOIN_GROUP
-                    elif content_type == 'tmpl_type_profile':
+                    elif content_type == 'tmpl_type_profilewithrevoke':
                         self.content = f'你将"{target_nickname}"移出了群聊'
                         self.ctype = ContextType.EXIT_GROUP  # 可根据需要创建新的ContextType
 
                     self.actual_user_nickname = target_nickname
                     self.actual_user_id = target_username
-                    
+
                     logger.debug(f"[gewechat] parsed group system message: {self.content} "
                                 f"type: {content_type} user: {target_nickname} ({target_username})")
-                    
+
                 except ET.ParseError as e:
                     logger.error(f"[gewechat] Failed to parse group system message XML: {e}")
                     self.content = content
@@ -620,14 +620,14 @@ class GeWeChatMessage(ChatMessage):
 
     def _is_non_user_message(self, msg_source: str, from_user_id: str) -> bool:
         """检查消息是否来自非用户账号（如公众号、腾讯游戏、微信团队等）
-        
+
         Args:
             msg_source: 消息的MsgSource字段内容
             from_user_id: 消息发送者的ID
-            
+
         Returns:
             bool: 如果是非用户消息返回True，否则返回False
-            
+
         Note:
             通过以下方式判断是否为非用户消息：
             1. 检查MsgSource中是否包含特定标签
