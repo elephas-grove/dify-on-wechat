@@ -1,4 +1,5 @@
 # bot_type
+ZERO = "zero"
 OPEN_AI = "openAI"
 CHATGPT = "chatGPT"
 BAIDU = "baidu"  # 百度文心一言模型
