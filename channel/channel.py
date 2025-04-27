@@ -11,6 +11,10 @@ class Channel(object):
     channel_type = ""
     NOT_SUPPORT_REPLYTYPE = [ReplyType.VOICE, ReplyType.IMAGE]
 
+    def logout(self):
+        return
+
+
     def startup(self):
         """
         init channel

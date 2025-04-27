@@ -56,8 +56,13 @@ class GeWeChatChannel(ChatChannel):
 
         logger.info(f"[gewechat] init: base_url: {self.base_url}, token: {self.token}, app_id: {self.app_id}, download_url: {self.download_url}")
 
+    def logout(self):
+        self.client.logout(self.app_id)
+        return
+
     def startup(self):
         # 如果app_id为空或登录后获取到新的app_id，保存配置
+
         app_id, error_msg = self.client.login(self.app_id)
         if error_msg:
             logger.error(f"[gewechat] login failed: {error_msg}")
@@ -70,7 +75,7 @@ class GeWeChatChannel(ChatChannel):
             logger.info(f"[gewechat] new app_id saved: {app_id}")
             self.app_id = app_id
 
-        # 获取回调地址，示例地址：http://172.17.0.1:9919/v2/api/callback/collect  
+        # 获取回调地址，示例地址：http://172.17.0.1:9919/v2/api/callback/collect
         callback_url = conf().get("gewechat_callback_url")
         if not callback_url:
             logger.error("[gewechat] callback_url is not set, unable to start callback server")
@@ -94,7 +99,7 @@ class GeWeChatChannel(ChatChannel):
         callback_thread = threading.Thread(target=set_callback, daemon=True)
         callback_thread.start()
 
-        # 从回调地址中解析出端口与url path，启动回调服务器  
+        # 从回调地址中解析出端口与url path，启动回调服务器
         parsed_url = urlparse(callback_url)
         path = parsed_url.path
         # 如果没有指定端口，使用默认端口80
@@ -207,14 +212,15 @@ class Query:
         web_data = web.data()
         logger.debug("[gewechat] receive data: {}".format(web_data))
         data = json.loads(web_data)
-        
+
         # gewechat服务发送的回调测试消息
         if isinstance(data, dict) and 'testMsg' in data and 'token' in data:
             logger.debug(f"[gewechat] 收到gewechat服务发送的回调测试消息")
             return "success"
 
         gewechat_msg = GeWeChatMessage(data, channel.client)
-        
+
+
         # 微信客户端的状态同步消息
         if gewechat_msg.ctype == ContextType.STATUS_SYNC:
             logger.debug(f"[gewechat] ignore status sync message: {gewechat_msg.content}")
