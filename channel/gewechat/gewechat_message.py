@@ -374,6 +374,15 @@ class GeWeChatMessage(ChatMessage):
                         self.ctype = ContextType.TEXT
                         refermsg = appmsg.find('refermsg')
                         if refermsg is not None:
+                            self.refer_info = {
+                                "type": refermsg.find('type').text if refermsg.find('type') is not None else '',
+                                "svrid": refermsg.find('svrid').text if refermsg.find('svrid') is not None else '',
+                                "fromusr": refermsg.find('fromusr').text if refermsg.find('fromusr') is not None else '',
+                                "chatusr": refermsg.find('chatusr').text if refermsg.find('chatusr') is not None else '',
+                                "displayname": refermsg.find('displayname').text if refermsg.find('displayname') is not None else '',
+                                "createtime": refermsg.find('createtime').text if refermsg.find('createtime') is not None else '',
+                                "title": appmsg.find('title').text if appmsg.find('title') is not None else ''
+                            }
                             displayname = refermsg.find('displayname').text if refermsg.find('displayname') is not None else ''
                             quoted_content = refermsg.find('content').text if refermsg.find('content') is not None else ''
                             title = appmsg.find('title').text if appmsg.find('title') is not None else ''
