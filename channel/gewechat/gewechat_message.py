@@ -303,6 +303,8 @@ class GeWeChatMessage(ChatMessage):
         super().__init__(msg)
         self.msg = msg
         self.content = ''  # 初始化self.content为空字符串
+        self.raw_content = ''
+        self.refer_info = None
 
         # 添加 self.msg_data 属性，兼容 Data 和 data 字段
         self.msg_data = {}
@@ -578,6 +580,7 @@ class GeWeChatMessage(ChatMessage):
             # 确保self.content是字符串后进行替换
             self.content = str(self.content)
             self.content = re.sub(f'{self.actual_user_id}:\n', '', self.content)
+            self.raw_content = self.content
             self.content = re.sub(r'@[^\u2005]+\u2005', '', self.content)
         else:
             # 如果不是群聊消息，保持结构统一，也要设置actual_user_id和actual_user_nickname
