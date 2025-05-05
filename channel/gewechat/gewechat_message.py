@@ -303,6 +303,8 @@ class GeWeChatMessage(ChatMessage):
         super().__init__(msg)
         self.msg = msg
         self.content = ''  # 初始化self.content为空字符串
+        self.raw_content = ''
+        self.refer_info = None
 
         # 添加 self.msg_data 属性，兼容 Data 和 data 字段
         self.msg_data = {}
@@ -378,6 +380,17 @@ class GeWeChatMessage(ChatMessage):
                             quoted_content = refermsg.find('content').text if refermsg.find('content') is not None else ''
                             title = appmsg.find('title').text if appmsg.find('title') is not None else ''
                             self.content = f"「{displayname}: {quoted_content}」----------\n{title}"
+
+                            self.refer_info = {
+                                "type": refermsg.find('type').text if refermsg.find('type') is not None else '',
+                                "svrid": refermsg.find('svrid').text if refermsg.find('svrid') is not None else '',
+                                "fromusr": refermsg.find('fromusr').text if refermsg.find('fromusr') is not None else '',
+                                "chatusr": refermsg.find('chatusr').text if refermsg.find('chatusr') is not None else '',
+                                "createtime": refermsg.find('createtime').text if refermsg.find('createtime') is not None else '',
+                                "displayname": displayname,
+                                "title": title,
+                                "quoted_content": quoted_content
+                            }
                         else:
                             self.content = content_xml
                     elif msg_type_node is not None and msg_type_node.text == '5':
@@ -567,6 +580,7 @@ class GeWeChatMessage(ChatMessage):
             # 确保self.content是字符串后进行替换
             self.content = str(self.content)
             self.content = re.sub(f'{self.actual_user_id}:\n', '', self.content)
+            self.raw_content = self.content
             self.content = re.sub(r'@[^\u2005]+\u2005', '', self.content)
         else:
             # 如果不是群聊消息，保持结构统一，也要设置actual_user_id和actual_user_nickname

@@ -59,6 +59,8 @@ class ChatMessage(object):
     _prepared = False
     _rawmsg = None
 
+    refer_info = None
+
     def __init__(self, _rawmsg):
         self._rawmsg = _rawmsg
 
